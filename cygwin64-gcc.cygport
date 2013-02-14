@@ -1,0 +1,90 @@
+TOOLCHAIN_TARGET="x86_64-pc-cygwin"
+inherit toolchain
+
+NAME="cygwin64-gcc"
+VERSION=4.8-20130210
+RELEASE=1
+CATEGORY="Devel"
+SUMMARY="GCC for Cygwin x86_64 toolchain"
+DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
+Objective-C, Fortran, Java, and Ada, as well as libraries for these languages
+(libstdc++, libgcj,...)."
+HOMEPAGE="http://gcc.gnu.org/"
+
+case ${VERSION} in
+*.*-20[1-9][0-9][0-1][0-9][0-3][0-9])
+	SRC_URI="mirror://gcc/snapshots/${VERSION}/gcc-${VERSION}.tar.bz2" ;;
+*)	SRC_URI="mirror://gnu/gcc/gcc-${VERSION}/gcc-${VERSION}.tar.bz2" ;;
+esac
+SRC_DIR="gcc-${VERSION}"
+
+PATCH_URI="
+	ftp://cygwin.com/pub/cygwin/64bit/x86_64-pc-cygwin-gcc-20130213.patch
+	config-rpath.patch
+"
+
+PKG_NAMES="${PN} ${PN}-core ${PN}-g++"
+cygwin64_gcc_core_REQUIRES="cygwin64-binutils cygwin64 cygwin64-w32api-runtime"
+cygwin64_gcc_core_SUMMARY="${SUMMARY} (C, OpenMP)"
+cygwin64_gcc_core_CONTENTS="
+	--exclude=c++ --exclude=objc --exclude=gcj --exclude=jni*.h
+	usr/bin/${TOOLCHAIN_TARGET}-cpp.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcc.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcc-*.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcov.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/collect2.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/crt*.o
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cyglto_plugin-0.dll
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include-fixed/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcov.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
+	usr/share/doc/
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
+"
+cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
+cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
+cygwin64_gcc_g___CONTENTS="
+	--exclude=gcj --exclude=gnu --exclude=java --exclude=javax --exclude=org
+	usr/bin/${TOOLCHAIN_TARGET}-c++.exe
+	usr/bin/${TOOLCHAIN_TARGET}-g++.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1plus.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/c++/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libstdc++.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libsupc++.*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-g++.1*
+"
+
+# shared libs: http://cygwin.com/ml/cygwin-developers/2013-02/msg00009.html
+CYGCONF_ARGS="
+	--enable-languages=c,c++
+	--disable-multilib
+	--disable-shared
+	--enable-version-specific-runtime-libs
+	--disable-__cxa_atexit
+	--with-gnu-as --with-gnu-ld
+	--with-gmp=/usr
+	--with-mpfr=/usr
+	--with-system-zlib
+	--with-arch-32=i686
+	--with-tune=generic
+"
+
+src_install() {
+	cd ${B}
+	cyginstall -j1
+
+	# Remove Cygwin-host libiberty.a
+	rm -f ${D}/usr/lib/libiberty.a
+
+	# conflicts with native gcc
+	rm -fr ${D}/usr/share/{gcc-*,info,locale,man/man7}
+}
+
+KEEP_LA_FILES="none"
