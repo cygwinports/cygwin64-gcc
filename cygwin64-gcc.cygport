@@ -2,8 +2,8 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=4.8-20130210
-RELEASE=2
+VERSION=4.8-20130217
+RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -20,6 +20,7 @@ SRC_DIR="gcc-${VERSION}"
 
 PATCH_URI="
 	ftp://cygwin.com/pub/cygwin/64bit/x86_64-pc-cygwin-gcc-20130215.patch
+	gcc48-cygwin64-shared-libgcc.patch
 	config-rpath.patch
 "
 
@@ -41,6 +42,7 @@ cygwin64_gcc_core_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcov.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libquadmath.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
 	usr/share/doc/
@@ -74,6 +76,8 @@ CYGCONF_ARGS="
 	--with-system-zlib
 	--with-arch-32=i686
 	--with-tune=generic
+	--without-libiconv-prefix
+	--without-libintl-prefix
 "
 
 src_install() {

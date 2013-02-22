@@ -1,0 +1,12 @@
+--- origsrc/gcc-4.8-20130217/libgcc/config.host	2013-02-21 20:13:42.358094100 -0600
++++ src/gcc-4.8-20130217/libgcc/config.host	2013-02-21 20:57:52.514674400 -0600
+@@ -1160,7 +1160,8 @@ i[34567]86-*-darwin* | x86_64-*-darwin*
+   i[34567]86-*-linux* | x86_64-*-linux* | \
+   i[34567]86-*-gnu* | \
+   i[34567]86-*-solaris2* | x86_64-*-solaris2.1[0-9]* | \
+-  i[34567]86-*-cygwin* | i[34567]86-*-mingw* | x86_64-*-mingw* | \
++  i[34567]86-*-cygwin* | x86_64-*-cygwin* | \
++  i[34567]86-*-mingw* | x86_64-*-mingw* | \
+   i[34567]86-*-freebsd* | x86_64-*-freebsd* | \
+   i[34567]86-*-openbsd* | x86_64-*-openbsd*)
+   	tmake_file="${tmake_file} t-softfp-tf"
