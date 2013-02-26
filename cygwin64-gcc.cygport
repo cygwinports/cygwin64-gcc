@@ -2,7 +2,7 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=4.8-20130217
+VERSION=4.8-20130224
 RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
@@ -19,8 +19,7 @@ esac
 SRC_DIR="gcc-${VERSION}"
 
 PATCH_URI="
-	ftp://cygwin.com/pub/cygwin/64bit/x86_64-pc-cygwin-gcc-20130215.patch
-	gcc48-cygwin64-shared-libgcc.patch
+	ftp://cygwin.com/pub/cygwin/64bit/x86_64-pc-cygwin-gcc-20130222.patch
 	config-rpath.patch
 "
 
@@ -42,6 +41,7 @@ cygwin64_gcc_core_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcov.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgomp.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libquadmath.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
@@ -49,6 +49,10 @@ cygwin64_gcc_core_CONTENTS="
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggcc_s-seh-1.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp-1.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygquadmath-0.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygssp-0.dll
 "
 cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
 cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
@@ -61,13 +65,14 @@ cygwin64_gcc_g___CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libstdc++.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libsupc++.*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-g++.1*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygstdc++-6.dll
 "
 
-# shared libs: http://cygwin.com/ml/cygwin-developers/2013-02/msg00009.html
 CYGCONF_ARGS="
 	--enable-languages=c,c++
 	--disable-multilib
-	--disable-shared
+	--enable-shared
+	--enable-libgomp
 	--enable-version-specific-runtime-libs
 	--disable-__cxa_atexit
 	--with-gnu-as --with-gnu-ld
@@ -86,6 +91,12 @@ src_install() {
 
 	# Remove Cygwin-host libiberty.a
 	rm -f ${D}/usr/lib/libiberty.a
+
+	# Workaround GCC install bug
+	mv ${D}/usr/lib/gcc/${TOOLCHAIN_TARGET}/lib/libgcc_s.dll.a ${D}/usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/
+
+	dodir ${TOOLCHAIN_SYSROOT}/usr/bin
+	mv $(find ${D}/ -name 'cyggcc_s*.dll') ${D}${TOOLCHAIN_SYSROOT}/usr/bin/
 
 	# conflicts with native gcc
 	rm -fr ${D}/usr/share/{gcc-*,info,locale,man/man7}
