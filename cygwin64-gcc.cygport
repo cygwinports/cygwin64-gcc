@@ -2,8 +2,8 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=4.8-20130224
-RELEASE=3
+VERSION=4.8-20130310
+RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -19,69 +19,51 @@ esac
 SRC_DIR="gcc-${VERSION}"
 
 PATCH_URI="
-	ftp://cygwin.com/pub/cygwin/64bit/x86_64-pc-cygwin-gcc-20130305.patch
-	config-rpath.patch
-"
-
-PKG_NAMES="${PN} ${PN}-core ${PN}-g++"
-cygwin64_gcc_core_REQUIRES="cygwin64-binutils cygwin64 cygwin64-w32api-runtime"
-cygwin64_gcc_core_SUMMARY="${SUMMARY} (C, OpenMP)"
-cygwin64_gcc_core_CONTENTS="
-	--exclude=c++ --exclude=objc --exclude=gcj --exclude=jni*.h
-	usr/bin/${TOOLCHAIN_TARGET}-cpp.exe
-	usr/bin/${TOOLCHAIN_TARGET}-gcc.exe
-	usr/bin/${TOOLCHAIN_TARGET}-gcc-*.exe
-	usr/bin/${TOOLCHAIN_TARGET}-gcov.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/collect2.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/crt*.o
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cyglto_plugin-0.dll
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include-fixed/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcov.*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgomp.*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libquadmath.*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
-	usr/share/doc/
-	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
-	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
-	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggcc_s-seh-1.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp-1.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygquadmath-0.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygssp-0.dll
-"
-cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
-cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
-cygwin64_gcc_g___CONTENTS="
-	--exclude=gcj --exclude=gnu --exclude=java --exclude=javax --exclude=org
-	usr/bin/${TOOLCHAIN_TARGET}-c++.exe
-	usr/bin/${TOOLCHAIN_TARGET}-g++.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1plus.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/c++/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libstdc++.*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libsupc++.*
-	usr/share/man/man1/${TOOLCHAIN_TARGET}-g++.1*
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygstdc++-6.dll
+	4.7-ada.patch
+	4.5-java-FIONREAD.patch
+	4.7-java-awt.patch
+	4.7-java-jni.patch
+	4.7-java-libgc-win32.patch
+	4.8-java-soname.patch
+	4.8-libatomic-cygwin.patch
+	4.8-libdecnumber-cygwin64.patch
+	4.7-libffi-noinst.patch
+	4.8-libffi-cygwin64.patch
+	4.8-libgcc-cygwin64.patch
+	4.7-libitm-cygwin.patch
+	4.7-libstdc.patch
+	4.8-lto-plugin-soname.patch
+	4.8-picflag-cygwin64.patch
+	4.8-specs-cygwin.patch
+	4.8-cmodel-medium.patch
 "
 
 CYGCONF_ARGS="
-	--enable-languages=c,c++,lto
-	--disable-multilib
-	--enable-shared
-	--enable-libgomp
+	--enable-shared --enable-shared-libgcc --enable-static
 	--enable-version-specific-runtime-libs
-	--disable-win32-registry
 	--disable-__cxa_atexit
-	--with-gnu-as --with-gnu-ld
-	--with-system-zlib
-	--with-arch-32=i686
-	--with-tune=generic
+	--with-dwarf2
+	--with-arch-32=i686 --with-tune=generic
+	--enable-languages=${NOTYET+ada,}c,c++,fortran,${NOTYET+java,}lto,objc,obj-c++
+	--enable-graphite
+	--enable-threads=posix
+	--enable-libatomic
+	--enable-libgomp
+	--disable-libitm
+	--enable-libquadmath
+	--enable-libquadmath-support
+	--enable-libssp
+	${NOTYET+--enable-libada}
+	${NOTYET+--enable-libjava}
+	--enable-libgcj-sublibs
+	--disable-java-awt
+	--disable-symvers
+	--with-ecj-jar=/usr/share/java/ecj.jar
+	--with-gnu-ld --with-gnu-as
+	--with-cloog-include=/usr/include/cloog-isl
 	--without-libiconv-prefix
 	--without-libintl-prefix
+	--with-system-zlib
 "
 
 src_install() {
@@ -102,3 +84,73 @@ src_install() {
 }
 
 KEEP_LA_FILES="none"
+
+PKG_NAMES="${NAME} ${NAME}-core ${NAME}-g++ ${NAME}-fortran ${NAME}-objc ${NAME}-objc++"
+cygwin64_gcc_core_REQUIRES="cygwin64-binutils cygwin64 cygwin64-w32api-runtime"
+cygwin64_gcc_core_SUMMARY="${SUMMARY} (C, OpenMP)"
+cygwin64_gcc_core_CONTENTS="
+	--exclude=c++ --exclude=objc --exclude=gcj --exclude=jni*.h
+	usr/bin/${TOOLCHAIN_TARGET}-cpp.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcc.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcc-*.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcov.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/collect2.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/crt*.o
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cyglto_plugin.dll
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include-fixed/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libatomic.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcov.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgomp.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libquadmath.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
+	usr/share/doc/
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygatomic-1.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggcc_s-seh-1.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp-1.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygquadmath-0.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygssp-0.dll
+"
+cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
+cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
+cygwin64_gcc_g___CONTENTS="
+	--exclude=gcj --exclude=gnu --exclude=java --exclude=javax --exclude=org
+	usr/bin/${TOOLCHAIN_TARGET}-c++.exe
+	usr/bin/${TOOLCHAIN_TARGET}-g++.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1plus.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/c++/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libstdc++.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libsupc++.*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-g++.1*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygstdc++-6.dll
+"
+cygwin64_gcc_fortran_SUMMARY="${SUMMARY} (Fortran)"
+cygwin64_gcc_fortran_REQUIRES="${NAME}-core"
+cygwin64_gcc_fortran_CONTENTS="
+	usr/bin/${TOOLCHAIN_TARGET}-gfortran.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/finclude/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/f951.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libcaf_single.a
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgfortran*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggfortran-3.dll
+"
+cygwin64_gcc_objc_SUMMARY="${SUMMARY} (Objective-C)"
+cygwin64_gcc_objc_REQUIRES="${NAME}-core"
+cygwin64_gcc_objc_CONTENTS="
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/objc/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1obj.exe
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libobjc.*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygobjc-4.dll
+"
+cygwin64_gcc_objc___SUMMARY="${SUMMARY} (Objective-C++)"
+cygwin64_gcc_objc___REQUIRES="${NAME}-core ${NAME}-g++ ${NAME}-objc"
+cygwin64_gcc_objc___CONTENTS="
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1objplus.exe
+"
