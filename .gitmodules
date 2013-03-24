@@ -1,0 +1,3 @@
+[submodule "gcc"]
+	path = gcc
+	url = git://cygwin-ports.git.sourceforge.net/gitroot/cygwin-ports/gcc
