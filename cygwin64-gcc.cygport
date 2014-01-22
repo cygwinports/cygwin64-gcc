@@ -3,7 +3,7 @@ inherit toolchain
 
 NAME="cygwin64-gcc"
 VERSION=4.8.2
-RELEASE=1
+RELEASE=2
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
