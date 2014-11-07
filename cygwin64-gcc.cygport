@@ -3,7 +3,7 @@ inherit toolchain
 
 NAME="cygwin64-gcc"
 VERSION=4.8.3
-RELEASE=1
+RELEASE=4
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -42,6 +42,9 @@ PATCH_URI="
 	gcc/4.8-Wimplicit-decls.patch
 	gcc/4.8-ada-cygwin64.patch
 	gcc/4.9-default-manifest.patch
+	gcc/4.8-libgcc-deregister.patch
+	gcc/4.8-__cxa_atexit.patch
+	gcc/4.8-libstdc-atexit_thread.patch
 	4.6-textdomain.patch
 "
 
@@ -49,7 +52,7 @@ CYGCONF_ARGS="
 	--libexecdir=/usr/lib
 	--enable-shared --enable-shared-libgcc --enable-static
 	--enable-version-specific-runtime-libs
-	--disable-__cxa_atexit
+	--enable-__cxa_atexit
 	--with-dwarf2
 	--with-arch-32=i686 --with-tune=generic
 	--enable-languages=ada,c,c++,fortran,${NOTYET+java,}lto,objc,obj-c++
