@@ -2,8 +2,8 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=4.8.3
-RELEASE=4
+VERSION=4.9.2
+RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -19,32 +19,32 @@ esac
 SRC_DIR="gcc-${VERSION}"
 
 PATCH_URI="
-	gcc/4.7-ada.patch
-	gcc/4.7-boehm-gc-cygwin.patch
-	gcc/4.7-execstack.patch
-	gcc/4.5-java-FIONREAD.patch
-	gcc/4.7-java-awt.patch
-	gcc/4.7-java-jni.patch
-	gcc/4.8-java-soname.patch
-	gcc/4.8-libatomic-cygwin.patch
-	gcc/4.8-libdecnumber-cygwin64.patch
-	gcc/4.7-libffi-noinst.patch
-	gcc/4.8-libffi-cygwin64.patch
-	gcc/4.8-libgcc-cygwin64.patch
-	gcc/4.7-libitm-cygwin.patch
-	gcc/4.7-libstdc-cygwin.patch
-	gcc/4.8-lto-plugin-soname.patch
-	gcc/4.8-picflag-cygwin64.patch
-	gcc/4.8-specs-cygwin.patch
-	gcc/4.8-cmodel-medium.patch
-	gcc/4.8-duplicate-symbols.patch
-	gcc/4.8-gcc-ada-DTR.patch
-	gcc/4.8-Wimplicit-decls.patch
-	gcc/4.8-ada-cygwin64.patch
-	gcc/4.9-default-manifest.patch
-	gcc/4.8-libgcc-deregister.patch
-	gcc/4.8-__cxa_atexit.patch
-	gcc/4.8-libstdc-atexit_thread.patch
+	gcc/0001-share-mingw-fset-stack-executable-with-cygwin.patch
+	gcc/0002-boehm-gc-for-cygwin.patch
+	gcc/0003-AWT-Font-fix-for-Cygwin.patch
+	gcc/0004-Cygwin-ioctl-may-emit-EINVAL.patch
+	gcc/0005-use-avoid-version-if-not-tracking-SO-version.patch
+	gcc/0006-cygwin-uses-cyg-library-prefix.patch
+	gcc/0007-bump-libgcj-version.patch
+	gcc/0008-libatomic-libtool-fixes-for-Cygwin.patch
+	gcc/0009-support-64bit-cygwin-too.patch
+	gcc/0010-Avoid-installing-libffi.patch
+	gcc/0011-libitm-libtool-fixes-for-Cygwin.patch
+	gcc/0012-Cygwin-uses-sysv-ABI-on-x86_64.patch
+	gcc/0013-Do-not-version-lto-plugin-on-cygwin-mingw.patch
+	gcc/0014-add-dummy-pthread-tsaware-and-large-address-aware-fo.patch
+	gcc/0014a-add-dummy-pthread-tsaware-and-large-address-aware-fo.patch
+	gcc/0015-handle-dllimport-properly-in-medium-model.patch
+	gcc/0016-skip-test-for-cygwin-mingw.patch
+	gcc/0017-64bit-Cygwin-uses-SEH.patch
+	gcc/0018-define-RTS_CONTROL_ENABLE-and-DTR_CONTROL_ENABLE-for.patch
+	gcc/0019-fix-some-implicit-declaration-warnings.patch
+	gcc/0020-fix-gnat-DLL-prefix-for-Cygwin.patch
+	gcc/0021-__cxa-atexit-for-Cygwin.patch
+	gcc/0022-prevent-modules-from-being-unloaded-before-their-dto.patch
+	gcc/0023-Attempt-to-fix-dw2-unwinder-for-Cygwin.patch
+	gcc/0024-Restore-compile-mode-pthread.patch
+	gcc/0025-fix-cygwin-stdint.patch
 	4.6-textdomain.patch
 "
 
@@ -57,6 +57,7 @@ CYGCONF_ARGS="
 	--with-arch-32=i686 --with-tune=generic
 	--enable-languages=ada,c,c++,fortran,${NOTYET+java,}lto,objc,obj-c++
 	--enable-graphite
+	--enable-linker-build-id
 	--enable-threads=posix
 	--enable-libatomic
 	--enable-libgomp
@@ -133,6 +134,7 @@ cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
 cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
 cygwin64_gcc_g___CONTENTS="
 	--exclude=gcj --exclude=gnu --exclude=java --exclude=javax --exclude=org
+	--exclude=*-gdb.py
 	usr/bin/${TOOLCHAIN_TARGET}-c++.exe
 	usr/bin/${TOOLCHAIN_TARGET}-g++.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1plus.exe
