@@ -2,7 +2,7 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=4.9.2
+VERSION=5.3.0
 RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
@@ -25,26 +25,25 @@ PATCH_URI="
 	gcc/0004-Cygwin-ioctl-may-emit-EINVAL.patch
 	gcc/0005-use-avoid-version-if-not-tracking-SO-version.patch
 	gcc/0006-cygwin-uses-cyg-library-prefix.patch
-	gcc/0007-bump-libgcj-version.patch
-	gcc/0008-libatomic-libtool-fixes-for-Cygwin.patch
-	gcc/0009-support-64bit-cygwin-too.patch
-	gcc/0010-Avoid-installing-libffi.patch
-	gcc/0011-libitm-libtool-fixes-for-Cygwin.patch
-	gcc/0012-Cygwin-uses-sysv-ABI-on-x86_64.patch
-	gcc/0013-Do-not-version-lto-plugin-on-cygwin-mingw.patch
-	gcc/0014-add-dummy-pthread-tsaware-and-large-address-aware-fo.patch
-	gcc/0014a-add-dummy-pthread-tsaware-and-large-address-aware-fo.patch
-	gcc/0015-handle-dllimport-properly-in-medium-model.patch
-	gcc/0016-skip-test-for-cygwin-mingw.patch
-	gcc/0017-64bit-Cygwin-uses-SEH.patch
-	gcc/0018-define-RTS_CONTROL_ENABLE-and-DTR_CONTROL_ENABLE-for.patch
-	gcc/0019-fix-some-implicit-declaration-warnings.patch
-	gcc/0020-fix-gnat-DLL-prefix-for-Cygwin.patch
-	gcc/0021-__cxa-atexit-for-Cygwin.patch
-	gcc/0022-prevent-modules-from-being-unloaded-before-their-dto.patch
-	gcc/0023-Attempt-to-fix-dw2-unwinder-for-Cygwin.patch
-	gcc/0024-Restore-compile-mode-pthread.patch
-	gcc/0025-fix-cygwin-stdint.patch
+	gcc/0007-Avoid-installing-libffi.patch
+	gcc/0009-Cygwin-uses-sysv-ABI-on-x86_64.patch
+	gcc/0010-Do-not-version-lto-plugin-on-cygwin-mingw.patch
+	gcc/0011-add-dummy-pthread-tsaware-and-large-address-aware-fo.patch
+	gcc/0012-handle-dllimport-properly-in-medium-model.patch
+	gcc/0013-skip-test-for-cygwin-mingw.patch
+	gcc/0014-64bit-Cygwin-uses-SEH.patch
+	gcc/0015-define-RTS_CONTROL_ENABLE-and-DTR_CONTROL_ENABLE-for.patch
+	gcc/0016-fix-some-implicit-declaration-warnings.patch
+	gcc/0017-__cxa-atexit-for-Cygwin.patch
+	gcc/0018-prevent-modules-from-being-unloaded-before-their-dto.patch
+	gcc/0019-Cygwin-doesn-t-do-text-mode-translations-for-file-ha.patch
+	gcc/0020-cygwin-uses-cyg-lib-prefix.patch
+	gcc/0021-search-usr-lib-w32api-explicitly.patch
+	gcc/0022-libgomp-soname-cygwin-mingw.patch
+	gcc/0023-glibcxx-use-c99.patch
+	gcc/0024-libitm-weak-symbols.patch
+	gcc/0025-enable-libcilkrts.patch
+	gcc/0026-g++-gnu-source.patch
 	4.6-textdomain.patch
 "
 
@@ -60,8 +59,9 @@ CYGCONF_ARGS="
 	--enable-linker-build-id
 	--enable-threads=posix
 	--enable-libatomic
+	--enable-libcilkrts
 	--enable-libgomp
-	--disable-libitm
+	--enable-libitm
 	--enable-libquadmath
 	--enable-libquadmath-support
 	--enable-libssp
@@ -70,13 +70,20 @@ CYGCONF_ARGS="
 	--enable-libgcj-sublibs
 	--disable-java-awt
 	--disable-symvers
+	--with-default-libstdcxx-abi=gcc4-compatible
 	--with-ecj-jar=/usr/share/java/ecj.jar
 	--with-gnu-ld --with-gnu-as
-	--with-cloog-include=/usr/include/cloog-isl
-	--without-libiconv-prefix
-	--without-libintl-prefix
 	--with-system-zlib
 "
+
+src_compile() {
+	cd ${B}
+	# configure tries to test SUSv4-compliant behaviour of
+	# realpath(..., NULL) via _XOPEN_VERSION
+	export glibcxx_cv_realpath=yes
+
+	toolchain_compile
+}
 
 src_install() {
 	cd ${B}
@@ -92,43 +99,54 @@ src_install() {
 	mv $(find ${D}/ -name 'cyggcc_s*.dll') ${D}${TOOLCHAIN_SYSROOT}/usr/bin/
 
 	# conflicts with native gcc
-	rm -fr ${D}/usr/share/{gcc-*,info,locale,man/man7}
+	rm -fr ${D}/usr/share/{gcc-*,info,man/man7}
+
+	# clean-up include-fixed
+	mv ${D}/usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/include-fixed/*limits.h \
+	   ${D}/usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/include/
+	rm -fr ${D}/usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/include-fixed/
 }
 
 KEEP_LA_FILES="none"
 
-PKG_NAMES="${NAME}-core ${NAME}-g++ ${NAME}-fortran ${NAME}-objc ${NAME}-objc++ ${NAME}-ada"
+PKG_NAMES="${NAME}-core ${NAME}-g++ ${NAME}-fortran ${NAME}-objc ${NAME}-objc++"
+PKG_NAMES+=" ${NAME}-ada ${NAME}-cilkplus"
 cygwin64_gcc_core_REQUIRES="cygwin64-binutils cygwin64 cygwin64-default-manifest cygwin64-w32api-runtime"
 cygwin64_gcc_core_SUMMARY="${SUMMARY} (C, OpenMP)"
 cygwin64_gcc_core_CONTENTS="
-	--exclude=c++ --exclude=objc --exclude=gcj --exclude=jni*.h
+	--exclude=c++ --exclude=cilk --exclude=objc
+	--exclude=*-gdb.py
 	usr/bin/${TOOLCHAIN_TARGET}-cpp.exe
 	usr/bin/${TOOLCHAIN_TARGET}-gcc.exe
 	usr/bin/${TOOLCHAIN_TARGET}-gcc-*.exe
 	usr/bin/${TOOLCHAIN_TARGET}-gcov.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcov-tool.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/collect2.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/crt*.o
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cyglto_plugin.dll
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include-fixed/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libatomic.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcov.*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgomp.*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgomp*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libitm.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libquadmath.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libvtv*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
 	usr/share/doc/
+	usr/share/locale/
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygatomic-1.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggcc_s-seh-1.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp-1.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp*-1.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygquadmath-0.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygssp-0.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygvtv*-0.dll
 "
 cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
 cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
@@ -175,4 +193,11 @@ cygwin64_gcc_ada_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/adainclude/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/adalib/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/gnat1.exe
+"
+cygwin64_gcc_cilkplus_SUMMARY="${SUMMARY} (Cilk Plus)"
+cygwin64_gcc_cilkplus_REQUIRES="${NAME}-core"
+cygwin64_gcc_cilkplus_CONTENTS="
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/cilk/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libcilkrts.*
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygcilkrts-5.dll
 "
