@@ -3,7 +3,7 @@ inherit toolchain
 
 NAME="cygwin64-gcc"
 VERSION=5.3.0
-RELEASE=1
+RELEASE=2
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -44,6 +44,7 @@ PATCH_URI="
 	gcc/0024-libitm-weak-symbols.patch
 	gcc/0025-enable-libcilkrts.patch
 	gcc/0026-g++-gnu-source.patch
+	gcc/0027-link-w32api.patch
 	4.6-textdomain.patch
 "
 
