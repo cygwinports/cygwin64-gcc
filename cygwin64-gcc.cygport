@@ -3,7 +3,7 @@ inherit toolchain
 
 NAME="cygwin64-gcc"
 VERSION=5.3.0
-RELEASE=2
+RELEASE=3
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -38,15 +38,15 @@ PATCH_URI="
 	gcc/0018-prevent-modules-from-being-unloaded-before-their-dto.patch
 	gcc/0019-Cygwin-doesn-t-do-text-mode-translations-for-file-ha.patch
 	gcc/0020-cygwin-uses-cyg-lib-prefix.patch
-	gcc/0021-search-usr-lib-w32api-explicitly.patch
 	gcc/0022-libgomp-soname-cygwin-mingw.patch
-	gcc/0023-glibcxx-use-c99.patch
 	gcc/0024-libitm-weak-symbols.patch
 	gcc/0025-enable-libcilkrts.patch
-	gcc/0026-g++-gnu-source.patch
 	gcc/0027-link-w32api.patch
+	gcc/0028-g++-time.patch
 	4.6-textdomain.patch
 "
+
+ARCH=i686
 
 CYGCONF_ARGS="
 	--libexecdir=/usr/lib
