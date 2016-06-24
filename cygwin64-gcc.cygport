@@ -2,8 +2,8 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=5.3.0
-RELEASE=3
+VERSION=5.4.0
+RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
@@ -41,7 +41,7 @@ PATCH_URI="
 	gcc/0022-libgomp-soname-cygwin-mingw.patch
 	gcc/0024-libitm-weak-symbols.patch
 	gcc/0025-enable-libcilkrts.patch
-	gcc/0027-link-w32api.patch
+	gcc/0027-libtool-w32api.patch
 	gcc/0028-g++-time.patch
 	4.6-textdomain.patch
 "
@@ -147,7 +147,8 @@ cygwin64_gcc_core_CONTENTS="
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp*-1.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygquadmath-0.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygssp-0.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygvtv*-0.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygvtv-0.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygvtv_stubs-0.dll
 "
 cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
 cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
