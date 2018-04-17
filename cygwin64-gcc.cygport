@@ -2,47 +2,41 @@ TOOLCHAIN_TARGET="x86_64-pc-cygwin"
 inherit toolchain
 
 NAME="cygwin64-gcc"
-VERSION=5.4.0
+VERSION=7.3.0
 RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Cygwin 64bit toolchain"
 DESCRIPTION="The GNU Compiler Collection includes front ends for C, C++,
-Objective-C, Fortran, Java, and Ada, as well as libraries for these languages
+Objective-C, Fortran, and Ada, as well as libraries for these languages
 (libstdc++, libgcj,...)."
 HOMEPAGE="http://gcc.gnu.org/"
 
 case ${VERSION} in
 *.*-20[1-9][0-9][0-1][0-9][0-3][0-9])
-	SRC_URI="mirror://gcc/snapshots/${VERSION}/gcc-${VERSION}.tar.bz2" ;;
-*)	SRC_URI="mirror://gnu/gcc/gcc-${VERSION}/gcc-${VERSION}.tar.bz2" ;;
+	SRC_URI="mirror://gcc/snapshots/${VERSION}/gcc-${VERSION}.tar.xz" ;;
+*)	SRC_URI="mirror://gnu/gcc/gcc-${VERSION}/gcc-${VERSION}.tar.xz" ;;
 esac
 SRC_DIR="gcc-${VERSION}"
 
 PATCH_URI="
 	gcc/0001-share-mingw-fset-stack-executable-with-cygwin.patch
-	gcc/0002-boehm-gc-for-cygwin.patch
-	gcc/0003-AWT-Font-fix-for-Cygwin.patch
-	gcc/0004-Cygwin-ioctl-may-emit-EINVAL.patch
-	gcc/0005-use-avoid-version-if-not-tracking-SO-version.patch
-	gcc/0006-cygwin-uses-cyg-library-prefix.patch
-	gcc/0007-Avoid-installing-libffi.patch
-	gcc/0009-Cygwin-uses-sysv-ABI-on-x86_64.patch
+	gcc/0007-Avoid-installing-libffi-V2.patch
+	gcc/0009-Cygwin-uses-sysv-ABI-on-x86_64-V2.patch
 	gcc/0010-Do-not-version-lto-plugin-on-cygwin-mingw.patch
 	gcc/0011-add-dummy-pthread-tsaware-and-large-address-aware-fo.patch
-	gcc/0012-handle-dllimport-properly-in-medium-model.patch
+	gcc/0012-handle-dllimport-properly-in-medium-model-V2.patch
 	gcc/0013-skip-test-for-cygwin-mingw.patch
 	gcc/0014-64bit-Cygwin-uses-SEH.patch
 	gcc/0015-define-RTS_CONTROL_ENABLE-and-DTR_CONTROL_ENABLE-for.patch
 	gcc/0016-fix-some-implicit-declaration-warnings.patch
 	gcc/0017-__cxa-atexit-for-Cygwin.patch
 	gcc/0018-prevent-modules-from-being-unloaded-before-their-dto.patch
-	gcc/0019-Cygwin-doesn-t-do-text-mode-translations-for-file-ha.patch
-	gcc/0020-cygwin-uses-cyg-lib-prefix.patch
+	gcc/0020-cygwin-uses-cyg-lib-prefix-v3.patch
 	gcc/0022-libgomp-soname-cygwin-mingw.patch
 	gcc/0024-libitm-weak-symbols.patch
-	gcc/0025-enable-libcilkrts.patch
-	gcc/0027-libtool-w32api.patch
 	gcc/0028-g++-time.patch
+	gcc/0030-newlib-ftm.patch
+	gcc/0031-define_std-unix.patch
 	4.6-textdomain.patch
 "
 
@@ -55,30 +49,28 @@ CYGCONF_ARGS="
 	--enable-__cxa_atexit
 	--with-dwarf2
 	--with-arch-32=i686 --with-tune=generic
-	--enable-languages=ada,c,c++,fortran,${NOTYET+java,}lto,objc,obj-c++
+	--enable-languages=c,c++,fortran,lto
 	--enable-graphite
 	--enable-linker-build-id
+	--enable-clocale=gnu
 	--enable-threads=posix
 	--enable-libatomic
-	--enable-libcilkrts
 	--enable-libgomp
 	--enable-libitm
 	--enable-libquadmath
 	--enable-libquadmath-support
-	--enable-libssp
-	--enable-libada
-	${NOTYET+--enable-libjava}
-	--enable-libgcj-sublibs
-	--disable-java-awt
+	--disable-libssp
 	--disable-symvers
 	--with-default-libstdcxx-abi=gcc4-compatible
-	--with-ecj-jar=/usr/share/java/ecj.jar
 	--with-gnu-ld --with-gnu-as
 	--with-system-zlib
 "
 
 src_compile() {
 	cd ${B}
+	# use built-in SSP with Cygwin 2.10
+	# FIXME: --disable-libssp should suffice in GCC 8
+	export gcc_cv_libc_provides_ssp=yes
 	# configure tries to test SUSv4-compliant behaviour of
 	# realpath(..., NULL) via _XOPEN_VERSION
 	export glibcxx_cv_realpath=yes
@@ -110,23 +102,21 @@ src_install() {
 
 KEEP_LA_FILES="none"
 
-PKG_NAMES="${NAME}-core ${NAME}-g++ ${NAME}-fortran ${NAME}-objc ${NAME}-objc++"
-PKG_NAMES+=" ${NAME}-ada ${NAME}-cilkplus"
+PKG_NAMES="${NAME}-core ${NAME}-g++ ${NAME}-fortran"
+cygwin64_gcc_core_OBSOLETES="${NAME}-ada ${NAME}-cilkplus ${NAME}-objc"
 cygwin64_gcc_core_REQUIRES="cygwin64-binutils cygwin64 cygwin64-default-manifest cygwin64-w32api-runtime"
 cygwin64_gcc_core_SUMMARY="${SUMMARY} (C, OpenMP)"
 cygwin64_gcc_core_CONTENTS="
-	--exclude=c++ --exclude=cilk --exclude=objc
 	--exclude=*-gdb.py
 	usr/bin/${TOOLCHAIN_TARGET}-cpp.exe
 	usr/bin/${TOOLCHAIN_TARGET}-gcc.exe
 	usr/bin/${TOOLCHAIN_TARGET}-gcc-*.exe
-	usr/bin/${TOOLCHAIN_TARGET}-gcov.exe
-	usr/bin/${TOOLCHAIN_TARGET}-gcov-tool.exe
+	usr/bin/${TOOLCHAIN_TARGET}-gcov*.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/collect2.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/crt*.o
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cyglto_plugin.dll
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/*.h
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/install-tools/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libatomic.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgcc*
@@ -134,27 +124,22 @@ cygwin64_gcc_core_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgomp*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libitm.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libquadmath.*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libssp*
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libvtv*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/lto*.exe
 	usr/share/doc/
 	usr/share/locale/
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
-	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
+	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov*.1*
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygatomic-1.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggcc_s-seh-1.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggomp*-1.dll
 	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygquadmath-0.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygssp-0.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygvtv-0.dll
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygvtv_stubs-0.dll
 "
+cygwin64_gcc_g___OBSOLETES="${NAME}-objc++"
 cygwin64_gcc_g___REQUIRES="cygwin64-gcc-core"
 cygwin64_gcc_g___SUMMARY="${SUMMARY} (C++)"
 cygwin64_gcc_g___CONTENTS="
 	--exclude=gcj --exclude=gnu --exclude=java --exclude=javax --exclude=org
-	--exclude=*-gdb.py
 	usr/bin/${TOOLCHAIN_TARGET}-c++.exe
 	usr/bin/${TOOLCHAIN_TARGET}-g++.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1plus.exe
@@ -173,33 +158,5 @@ cygwin64_gcc_fortran_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libcaf_single.a
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libgfortran*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gfortran.1*
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggfortran-3.dll
-"
-cygwin64_gcc_objc_SUMMARY="${SUMMARY} (Objective-C)"
-cygwin64_gcc_objc_REQUIRES="${NAME}-core"
-cygwin64_gcc_objc_CONTENTS="
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/objc/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1obj.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libobjc.*
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygobjc-4.dll
-"
-cygwin64_gcc_objc___SUMMARY="${SUMMARY} (Objective-C++)"
-cygwin64_gcc_objc___REQUIRES="${NAME}-core ${NAME}-g++ ${NAME}-objc"
-cygwin64_gcc_objc___CONTENTS="
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/cc1objplus.exe
-"
-cygwin64_gcc_ada_SUMMARY="${SUMMARY} (Ada)"
-cygwin64_gcc_ada_REQUIRES="${NAME}-core"
-cygwin64_gcc_ada_CONTENTS="
-	usr/bin/${TOOLCHAIN_TARGET}-gnat*.exe
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/adainclude/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/adalib/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/gnat1.exe
-"
-cygwin64_gcc_cilkplus_SUMMARY="${SUMMARY} (Cilk Plus)"
-cygwin64_gcc_cilkplus_REQUIRES="${NAME}-core"
-cygwin64_gcc_cilkplus_CONTENTS="
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/include/cilk/
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION/-*/.*}/libcilkrts.*
-	${TOOLCHAIN_SYSROOT#/}/usr/bin/cygcilkrts-5.dll
+	${TOOLCHAIN_SYSROOT#/}/usr/bin/cyggfortran-4.dll
 "
